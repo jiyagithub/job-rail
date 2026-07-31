@@ -1,15 +1,12 @@
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
 import Organizations from "../pages/Organizations";
-import Projects from "../pages/Projects";
+import OrganizationDetail from "../pages/OrganizationDetail";
+import ProjectDetail from "../pages/ProjectDetail";
+import QueueDetail from "../pages/QueueDetail";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import ProtectedRoute from "./ProtectedRoute";
-import Jobs from "../pages/Jobs";
-import Queues from "../pages/Queues";
-import Workers from "../pages/Workers";
-import JobLogs from "../pages/JobLogs";
-import ExecutionHistory from "../pages/ExecutionHistory";
 import DeadLetterQueue from "../pages/DeadLetterQueue";
 import Analytics from "../pages/Analytics";
 import Profile from "../pages/Profile";
@@ -19,6 +16,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
       <Route
         path="/"
         element={
@@ -27,6 +25,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/organizations"
         element={
@@ -35,48 +34,37 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
-        path="/projects"
+        path="/organizations/:orgId"
         element={
           <ProtectedRoute>
-            <Projects />
+            <OrganizationDetail />
           </ProtectedRoute>
         }
       />
 
       <Route
-  path="/queues"
-  element={
-    <ProtectedRoute>
-      <Queues />
-    </ProtectedRoute>
-  }
-/>
+        path="/organizations/:orgId/projects/:projectId"
+        element={
+          <ProtectedRoute>
+            <ProjectDetail />
+          </ProtectedRoute>
+        }
+      />
 
-<Route
-  path="/jobs"
-  element={
-    <ProtectedRoute>
-      <Jobs />
-    </ProtectedRoute>
-  }
-/>
+      <Route
+        path="/organizations/:orgId/projects/:projectId/queues/:queueId"
+        element={
+          <ProtectedRoute>
+            <QueueDetail />
+          </ProtectedRoute>
+        }
+      />
 
-<Route
-  path="/workers"
-  element={
-    <ProtectedRoute>
-      <Workers />
-    </ProtectedRoute>
-  }
-/>
-
-<Route path="/logs" element={<ProtectedRoute><JobLogs /></ProtectedRoute>} />
-<Route path="/executions" element={<ProtectedRoute><ExecutionHistory /></ProtectedRoute>} />
-<Route path="/dead-letter" element={<ProtectedRoute><DeadLetterQueue /></ProtectedRoute>} />
-<Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-<Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-
+      <Route path="/dead-letter" element={<ProtectedRoute><DeadLetterQueue /></ProtectedRoute>} />
+      <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
     </Routes>
   );
 }

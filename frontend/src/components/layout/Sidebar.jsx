@@ -2,28 +2,16 @@ import { NavLink } from "react-router-dom";
 import {
   LuLayoutDashboard,
   LuBuilding2,
-  LuFolderKanban,
-  LuListTree,
-  LuBriefcase,
-  LuServer,
   LuSkull,
   LuChartBar,
-  LuFileText,
-  LuHistory,
   LuUser,
 } from "react-icons/lu";
 
 const navItems = [
   { label: "Dashboard", icon: LuLayoutDashboard, path: "/", ready: true },
   { label: "Organizations", icon: LuBuilding2, path: "/organizations", ready: true },
-  { label: "Projects", icon: LuFolderKanban, path: "/projects", ready: true },
-  { label: "Queues", icon: LuListTree, path: "/queues", ready: true },
-  { label: "Jobs", icon: LuBriefcase, path: "/jobs", ready: true },
-  { label: "Workers", icon: LuServer, path: "/workers", ready: true },
   { label: "Dead Letter Queue", icon: LuSkull, path: "/dead-letter", ready: true },
   { label: "Analytics", icon: LuChartBar, path: "/analytics", ready: true },
-  { label: "Job Logs", icon: LuFileText, path: "/logs", ready: true },
-  { label: "Execution History", icon: LuHistory, path: "/executions", ready: true },
   { label: "Profile", icon: LuUser, path: "/profile", ready: true },
 ];
 
