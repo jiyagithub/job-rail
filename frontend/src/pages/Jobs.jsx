@@ -20,8 +20,11 @@ function Jobs() {
   const [jobName, setJobName] = useState("");
   const [priority, setPriority] = useState(0);
   const [maxRetries, setMaxRetries] = useState(3);
+  const [jobType, setJobType] = useState("immediate");
+  const [delayMinutes, setDelayMinutes] = useState(5);
   const [scheduledAt, setScheduledAt] = useState("");
-  const [payloadText, setPayloadText] = useState("{\n  \n}");
+  const [recurrenceMinutes, setRecurrenceMinutes] = useState(60);
+  const [taskDescription, setTaskDescription] = useState("");
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,30 +36,28 @@ function Jobs() {
   async function handleCreate(e) {
     e.preventDefault();
     setFormError("");
-
-    let parsedPayload;
-    try {
-      parsedPayload = payloadText.trim() ? JSON.parse(payloadText) : {};
-    } catch (err) {
-      setFormError("Payload must be valid JSON.");
-      return;
-    }
-
     setSubmitting(true);
+
     try {
       await createJob({
         queue_id: selectedQueueId,
         job_name: jobName,
-        payload: parsedPayload,
+        payload: { description: taskDescription },
         priority: Number(priority),
         max_retries: Number(maxRetries),
-        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+        job_type: jobType,
+        delay_minutes: jobType === "delayed" ? Number(delayMinutes) : undefined,
+        scheduled_at: jobType === "scheduled" && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+        recurrence_interval_minutes: jobType === "recurring" ? Number(recurrenceMinutes) : undefined,
       });
       setJobName("");
       setPriority(0);
       setMaxRetries(3);
+      setJobType("immediate");
+      setDelayMinutes(5);
       setScheduledAt("");
-      setPayloadText("{\n  \n}");
+      setRecurrenceMinutes(60);
+      setTaskDescription("");
       setModalOpen(false);
     } catch (err) {
       setFormError(err.response?.data?.message || "Failed to create job");
@@ -192,9 +193,95 @@ function Jobs() {
               value={jobName}
               onChange={(e) => setJobName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              placeholder="send-welcome-email"
+              placeholder="Send welcome email"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              What should this job do?
+            </label>
+            <textarea
+              value={taskDescription}
+              onChange={(e) => setTaskDescription(e.target.value)}
+              rows={3}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              placeholder="Describe the task in plain words, e.g. 'Send a welcome email to new signups'"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              When should it run?
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: "immediate", label: "Immediate", hint: "Run right away" },
+                { value: "delayed", label: "Delayed", hint: "Run after a short wait" },
+                { value: "scheduled", label: "Scheduled", hint: "Run at an exact time" },
+                { value: "recurring", label: "Recurring", hint: "Run repeatedly" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setJobType(option.value)}
+                  className={`text-left rounded-lg border px-3 py-2 transition-colors ${
+                    jobType === option.value
+                      ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10"
+                      : "border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{option.label}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{option.hint}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {jobType === "delayed" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Run after how many minutes?
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={delayMinutes}
+                onChange={(e) => setDelayMinutes(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+          )}
+
+          {jobType === "scheduled" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Run at exactly...
+              </label>
+              <input
+                type="datetime-local"
+                required
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+          )}
+
+          {jobType === "recurring" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Repeat every how many minutes?
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={recurrenceMinutes}
+                onChange={(e) => setRecurrenceMinutes(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -215,31 +302,6 @@ function Jobs() {
                 className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Scheduled At <span className="text-gray-400">(optional — leave blank to run now)</span>
-            </label>
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Payload (JSON)
-            </label>
-            <textarea
-              value={payloadText}
-              onChange={(e) => setPayloadText(e.target.value)}
-              rows={5}
-              spellCheck={false}
-              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
           </div>
 
           <button
