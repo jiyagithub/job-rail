@@ -131,14 +131,37 @@ const markExecutionFailed = async (executionId, errorMessage) => {
     );
 };
 
-const markJobAsCompleted = async (jobId) => {
-    await pool.query(
-        `UPDATE jobs
-         SET status = 'completed',
-             completed_at = CURRENT_TIMESTAMP
-         WHERE id = $1`,
-        [jobId]
-    );
+const markJobAsCompleted = async (job) => {
+    if (job.job_type === "recurring" && job.recurrence_interval_minutes) {
+        const nextRun = new Date(
+            Date.now() + job.recurrence_interval_minutes * 60 * 1000
+        );
+
+        await pool.query(
+            `UPDATE jobs
+             SET status = 'pending',
+                 completed_at = CURRENT_TIMESTAMP,
+                 scheduled_at = $1,
+                 started_at = NULL,
+                 retry_count = 0
+             WHERE id = $2`,
+            [nextRun, job.id]
+        );
+
+        await addJobLog(
+            job.id,
+            "INFO",
+            `Recurring job rescheduled for ${nextRun.toISOString()}`
+        );
+    } else {
+        await pool.query(
+            `UPDATE jobs
+             SET status = 'completed',
+                 completed_at = CURRENT_TIMESTAMP
+             WHERE id = $1`,
+            [job.id]
+        );
+    }
 };
 
 const handleJobFailure = async (
@@ -242,12 +265,6 @@ const executeJob = async (job) => {
 
     await sleep(3000);
 
-    const shouldFail = true;
-
-    if (shouldFail) {
-        throw new Error("Simulated job failure");
-    }
-
     await addJobLog(
         job.id,
         "INFO",
@@ -272,7 +289,7 @@ const processJob = async (job) => {
     try {
         await executeJob(job);
 
-        await markJobAsCompleted(job.id);
+        await markJobAsCompleted(job);
         await markExecutionCompleted(executionId);
 
         await addJobLog(
@@ -321,4 +338,4 @@ const startWorker = async () => {
     }
 };
 
-startWorker();
+export default startWorker;

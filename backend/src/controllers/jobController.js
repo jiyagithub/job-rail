@@ -2,13 +2,51 @@ import pool from "../config/db.js";
 
 export const createJob = async (req, res) => {
   try {
-    const { queue_id, job_name, payload, priority, max_retries, scheduled_at } =
-      req.body;
+    const {
+      queue_id,
+      job_name,
+      payload,
+      priority,
+      max_retries,
+      job_type,
+      delay_minutes,
+      scheduled_at,
+      recurrence_interval_minutes,
+    } = req.body;
 
     if (!queue_id || !job_name) {
       return res.status(400).json({
         message: "queue_id and job_name are required",
       });
+    }
+
+    const validTypes = ["immediate", "delayed", "scheduled", "recurring"];
+    const type = validTypes.includes(job_type) ? job_type : "immediate";
+
+    let computedScheduledAt;
+    let computedRecurrence = null;
+
+    if (type === "immediate") {
+      computedScheduledAt = new Date();
+    } else if (type === "delayed") {
+      const minutes = Number(delay_minutes) || 0;
+      computedScheduledAt = new Date(Date.now() + minutes * 60 * 1000);
+    } else if (type === "scheduled") {
+      if (!scheduled_at) {
+        return res.status(400).json({
+          message: "scheduled_at is required for a scheduled job",
+        });
+      }
+      computedScheduledAt = new Date(scheduled_at);
+    } else if (type === "recurring") {
+      const minutes = Number(recurrence_interval_minutes) || 0;
+      if (minutes <= 0) {
+        return res.status(400).json({
+          message: "recurrence_interval_minutes must be greater than 0 for a recurring job",
+        });
+      }
+      computedScheduledAt = new Date();
+      computedRecurrence = minutes;
     }
 
     const queueCheck = await pool.query(
@@ -34,9 +72,11 @@ export const createJob = async (req, res) => {
         payload,
         priority,
         max_retries,
-        scheduled_at
+        scheduled_at,
+        job_type,
+        recurrence_interval_minutes
      )
-     VALUES ($1, $2, $3, $4, $5, $6)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
       [
         queue_id,
@@ -44,7 +84,9 @@ export const createJob = async (req, res) => {
         payload || {},
         priority ?? 0,
         max_retries ?? 3,
-        scheduled_at || new Date(),
+        computedScheduledAt,
+        type,
+        computedRecurrence,
       ],
     );
 
