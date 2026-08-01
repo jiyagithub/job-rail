@@ -11,22 +11,30 @@ export function useJobLogs(jobId) {
       setLogs([]);
       return;
     }
+
     let isMounted = true;
-    setLoading(true);
-    setError("");
-    axiosClient
-      .get(`/jobs/${jobId}/logs`)
-      .then((res) => {
-        if (isMounted) setLogs(res.data.logs || []);
-      })
-      .catch((err) => {
-        if (isMounted) setError(err.response?.data?.message || "Failed to load logs");
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+
+    function fetchLogs(showLoading) {
+      if (showLoading) setLoading(true);
+      axiosClient
+        .get(`/jobs/${jobId}/logs`)
+        .then((res) => {
+          if (isMounted) setLogs(res.data.logs || []);
+        })
+        .catch((err) => {
+          if (isMounted) setError(err.response?.data?.message || "Failed to load logs");
+        })
+        .finally(() => {
+          if (isMounted && showLoading) setLoading(false);
+        });
+    }
+
+    fetchLogs(true);
+    const interval = setInterval(() => fetchLogs(false), 3000);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, [jobId]);
 

@@ -11,22 +11,30 @@ export function useJobExecutions(jobId) {
       setExecutions([]);
       return;
     }
+
     let isMounted = true;
-    setLoading(true);
-    setError("");
-    axiosClient
-      .get(`/jobs/${jobId}/executions`)
-      .then((res) => {
-        if (isMounted) setExecutions(res.data.executions || []);
-      })
-      .catch((err) => {
-        if (isMounted) setError(err.response?.data?.message || "Failed to load executions");
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+
+    function fetchExecutions(showLoading) {
+      if (showLoading) setLoading(true);
+      axiosClient
+        .get(`/jobs/${jobId}/executions`)
+        .then((res) => {
+          if (isMounted) setExecutions(res.data.executions || []);
+        })
+        .catch((err) => {
+          if (isMounted) setError(err.response?.data?.message || "Failed to load executions");
+        })
+        .finally(() => {
+          if (isMounted && showLoading) setLoading(false);
+        });
+    }
+
+    fetchExecutions(true);
+    const interval = setInterval(() => fetchExecutions(false), 3000);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, [jobId]);
 

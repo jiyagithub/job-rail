@@ -6,7 +6,10 @@ import {
   LuCheck,
   LuX,
   LuRefreshCw,
+  LuArrowRight,
 } from "react-icons/lu";
+import { Link } from "react-router-dom";
+
 import {
   PieChart,
   Pie,
@@ -42,6 +45,21 @@ function Dashboard() {
 
   return (
     <DashboardLayout title="Dashboard">
+      <Link
+        to="/organizations"
+        className="mb-6 flex items-center justify-between gap-3 bg-brand-600 hover:bg-brand-700 transition-colors text-white rounded-2xl px-5 py-4 shadow-sm"
+      >
+        <div>
+          <h2 className="font-semibold">Get started</h2>
+          <p className="text-sm text-brand-100">
+            Create an organization to begin setting up your projects, queues, and jobs.
+          </p>
+        </div>
+        <span className="flex items-center gap-1.5 text-sm font-medium shrink-0 bg-white/15 rounded-lg px-3 py-2">
+          Go to Organizations <LuArrowRight size={16} />
+        </span>
+      </Link>
+
       {error && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-lg px-4 py-3">
           {error}

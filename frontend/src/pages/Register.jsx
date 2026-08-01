@@ -53,7 +53,7 @@ function Register() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              placeholder="Jiya Sharma"
+              placeholder="your name"
             />
           </div>
           <div>
